@@ -1,18 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/data_model.dart';
-import '../services/api_service.dart';
+import '../services/api_service2.dart';
 import 'detail_screen.dart'; // Import the DetailScreen
 
-class DataListScreen extends StatefulWidget {
+class DataListScreen2 extends StatefulWidget {
   @override
-  _DataListScreenState createState() => _DataListScreenState();
+  _DataListScreenState2 createState() => _DataListScreenState2();
 }
 
-class _DataListScreenState extends State<DataListScreen> {
+class _DataListScreenState2 extends State<DataListScreen2> {
   late Future<List<DataModel>> dataList;
-  final ApiService apiService = ApiService();
+  final ApiService2 apiService = ApiService2();
   late Timer _timer;
+  List<DataModel> _existingData = []; // เก็บข้อมูลที่มีอยู่แล้ว
 
   @override
   void initState() {
@@ -27,9 +28,21 @@ class _DataListScreenState extends State<DataListScreen> {
     super.dispose();
   }
 
-  void fetchData() {
+  void fetchData() async {
+    List<DataModel> newData = await apiService.fetchData(); // ดึงข้อมูลใหม่
+
     setState(() {
-      dataList = apiService.fetchData(); // Update the future data
+      // ตรวจสอบข้อมูลใหม่และเพิ่มเข้าไปใน _existingData
+      for (var item in newData) {
+        if (!_existingData.any((existing) => existing.id == item.id)) {
+          _existingData.insert(0, item); // เพิ่มข้อมูลใหม่ที่ไม่ซ้ำกัน
+        }
+      }
+      // เก็บข้อมูลไว้เพียง 10 รายการล่าสุด
+      if (_existingData.length > 10) {
+        _existingData = _existingData.sublist(0, 10);
+      }
+      dataList = Future.value(_existingData); // อัปเดต future ด้วยข้อมูลใหม่
     });
   }
 
@@ -43,7 +56,7 @@ class _DataListScreenState extends State<DataListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Latest Data'),
+        title: Text('Latest Data 2'),
         backgroundColor: Colors.blueAccent,
       ),
       body: FutureBuilder<List<DataModel>>(

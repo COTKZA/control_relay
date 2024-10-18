@@ -7,7 +7,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 // Include the database connection
 include './../config.php';
 // Prepare the SQL query to get all records from the esp32_data table
-$sql = "SELECT * FROM moisture_data ORDER BY date DESC, time DESC";
+$sql = "SELECT * FROM moisture_data1 ORDER BY date DESC, time DESC";
 $result = $conn->query($sql);
 
 // Check if there are results

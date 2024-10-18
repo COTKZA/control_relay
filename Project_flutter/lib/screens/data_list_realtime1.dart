@@ -1,30 +1,46 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/data_model.dart';
-import '../services/api_service.dart';
+import '../services/api_service1.dart';
 
-class DataListRealtimeScreen extends StatefulWidget {
+class DataListRealtimeScreen1 extends StatefulWidget {
   @override
-  _DataListRealtimeScreenState createState() => _DataListRealtimeScreenState();
+  _DataListRealtimeScreenState1 createState() =>
+      _DataListRealtimeScreenState1();
 }
 
-class _DataListRealtimeScreenState extends State<DataListRealtimeScreen> {
-  late Future<List<DataModel>> dataList;
-  final ApiService apiService = ApiService();
+class _DataListRealtimeScreenState1 extends State<DataListRealtimeScreen1> {
+  DataModel? latestData; // Store the latest data
+  final ApiService1 apiService = ApiService1();
   late Timer _timer; // Timer for periodic updates
 
   @override
   void initState() {
     super.initState();
     fetchData(); // Initial fetch
-    // Set up periodic fetching every 5 seconds
+    // Set up periodic fetching every 1 second
     _timer = Timer.periodic(Duration(seconds: 1), (Timer t) => fetchData());
   }
 
   Future<void> fetchData() async {
-    setState(() {
-      dataList = apiService.fetchData(); // Fetch data from API
-    });
+    try {
+      // Fetch data from API
+      List<DataModel> fetchedData = await apiService.fetchData();
+      if (fetchedData.isNotEmpty) {
+        DataModel newData = fetchedData.first; // Get the latest data
+        // Update state only if the new data is different
+        if (latestData == null ||
+            latestData!.date != newData.date ||
+            latestData!.time != newData.time) {
+          setState(() {
+            latestData = newData; // Update latestData
+          });
+        }
+      }
+    } catch (e) {
+      // Handle error if needed
+      print('Error fetching data: $e');
+    }
   }
 
   @override
@@ -37,20 +53,11 @@ class _DataListRealtimeScreenState extends State<DataListRealtimeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Real-time Data'),
+        title: Text('Real-time Soil Moisture Sensor 1'),
         backgroundColor: Colors.blueAccent,
       ),
-      body: FutureBuilder<List<DataModel>>(
-        future: dataList,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-            final latestData = snapshot.data!.first; // Get the latest data
-
-            return Center(
+      body: latestData != null
+          ? Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -71,7 +78,7 @@ class _DataListRealtimeScreenState extends State<DataListRealtimeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Latest Humidity: ${latestData.humidity}%',
+                              'Latest Humidity: ${latestData!.humidity}%',
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
@@ -80,14 +87,14 @@ class _DataListRealtimeScreenState extends State<DataListRealtimeScreen> {
                             ),
                             SizedBox(height: 8),
                             Text(
-                              'Date: ${latestData.date}',
+                              'Date: ${latestData!.date}',
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.black54,
                               ),
                             ),
                             Text(
-                              'Time: ${latestData.time}',
+                              'Time: ${latestData!.time}',
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.black54,
@@ -101,16 +108,12 @@ class _DataListRealtimeScreenState extends State<DataListRealtimeScreen> {
                         height: 20), // Space between humidity and relay status
 
                     // Display relay status
-                    RelayStatusWidget(relay: latestData.relay),
+                    RelayStatusWidget(relay: latestData!.relay),
                   ],
                 ),
               ),
-            );
-          } else {
-            return Center(child: Text('No data available'));
-          }
-        },
-      ),
+            )
+          : Center(child: CircularProgressIndicator()),
     );
   }
 }

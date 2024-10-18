@@ -2,10 +2,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/data_model.dart';
 
-class ApiService {
+class ApiService2 {
   Future<List<DataModel>> fetchData() async {
     final response = await http.get(Uri.parse(
-        'http://127.0.0.1/control_relay/api/api_data/moisture_api.php'));
+        'http://127.0.0.1/control_relay/api/api_data/moisture_data2_api.php'));
 
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);

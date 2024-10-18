@@ -46,37 +46,31 @@ void loop() {
   int sensorValue1 = analogRead(mq2Pin1);
   int sensorValue2 = analogRead(mq2Pin2);
   
-  // แปลงค่า Analog ให้เป็นค่าความเข้มของก๊าซ
+  // แสดงค่าจากเซ็นเซอร์
   Serial.print("Sensor Value 1: ");
   Serial.println(sensorValue1);
   Serial.print("Sensor Value 2: ");
   Serial.println(sensorValue2);
   
   // ควบคุมรีเลย์ตามค่าจากเซ็นเซอร์ตัวที่ 1
-  String relayState1 = "OFF"; // เริ่มต้นรีเลย์ 1 เป็น OFF
-  if (sensorValue1 < 3000) {
-    // เปิดรีเลย์ 1
+  if (sensorValue1 > 3000) {
+    // เปิดรีเลย์ 1 (จ่ายไฟ)
     digitalWrite(relayPin1, HIGH);
-    relayState1 = "ON"; // เปลี่ยนสถานะรีเลย์ 1 เป็น ON
     Serial.println("Relay 1 ON");
-  } else {
-    // ปิดรีเลย์ 1
+  } else if (sensorValue1 < 3000) {
+    // ปิดรีเลย์ 1 (ไม่จ่ายไฟ)
     digitalWrite(relayPin1, LOW);
-    relayState1 = "OFF"; // เปลี่ยนสถานะรีเลย์ 1 เป็น OFF
     Serial.println("Relay 1 OFF");
   }
 
   // ควบคุมรีเลย์ตามค่าจากเซ็นเซอร์ตัวที่ 2
-  String relayState2 = "OFF"; // เริ่มต้นรีเลย์ 2 เป็น OFF
-  if (sensorValue2 < 3000) {
-    // เปิดรีเลย์ 2
+  if (sensorValue2 > 3000) {
+    // เปิดรีเลย์ 2 (จ่ายไฟ)
     digitalWrite(relayPin2, HIGH);
-    relayState2 = "ON"; // เปลี่ยนสถานะรีเลย์ 2 เป็น ON
     Serial.println("Relay 2 ON");
-  } else {
-    // ปิดรีเลย์ 2
+  } else if (sensorValue2 < 3000) {
+    // ปิดรีเลย์ 2 (ไม่จ่ายไฟ)
     digitalWrite(relayPin2, LOW);
-    relayState2 = "OFF"; // เปลี่ยนสถานะรีเลย์ 2 เป็น OFF
     Serial.println("Relay 2 OFF");
   }
 
@@ -87,8 +81,8 @@ void loop() {
     http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
     // สร้าง payload สำหรับส่ง
-    String payload = "humidity1=" + String(sensorValue1) + "&relay1=" + relayState1 +
-                     "&humidity2=" + String(sensorValue2) + "&relay2=" + relayState2;
+    String payload = "humidity1=" + String(sensorValue1) + "&relay1=" + (digitalRead(relayPin1) == HIGH ? "ON" : "OFF") +
+                     "&humidity2=" + String(sensorValue2) + "&relay2=" + (digitalRead(relayPin2) == HIGH ? "ON" : "OFF");
     
     // ส่ง POST request
     int httpResponseCode = http.POST(payload);
@@ -108,5 +102,5 @@ void loop() {
   }
 
   // รอเวลา 5 วินาทีก่อนอ่านค่าครั้งถัดไป
-  delay(1000);
+  delay(5000);
 }

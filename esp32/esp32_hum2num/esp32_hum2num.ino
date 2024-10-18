@@ -36,47 +36,55 @@ void setup() {
   pinMode(relayPin1, OUTPUT);
   pinMode(relayPin2, OUTPUT);
   
-  // ปิดรีเลย์เริ่มต้น
-  digitalWrite(relayPin1, LOW);
-  digitalWrite(relayPin2, LOW);
+  // ปิดรีเลย์เริ่มต้น (ตัดไฟ)
+  digitalWrite(relayPin1, HIGH); // OFF
+  digitalWrite(relayPin2, HIGH); // OFF
 }
+
+// ค่าสูงสุดของเซ็นเซอร์
+const int maxSensorValue = 4095; // ปรับตามค่าที่เซ็นเซอร์สามารถอ่านได้
 
 void loop() {
   // อ่านค่าจากเซ็นเซอร์ MQ-2
   int sensorValue1 = analogRead(mq2Pin1);
   int sensorValue2 = analogRead(mq2Pin2);
   
-  // แปลงค่า Analog ให้เป็นค่าความเข้มของก๊าซ
+  // แปลงค่าเป็นเปอร์เซนต์
+  float humidity1Percentage = (sensorValue1 / (float)maxSensorValue) * 100;
+  float humidity2Percentage = (sensorValue2 / (float)maxSensorValue) * 100;
+
+  // แสดงค่าจากเซ็นเซอร์
   Serial.print("Sensor Value 1: ");
-  Serial.println(sensorValue1);
-  Serial.print("Sensor Value 2: ");
-  Serial.println(sensorValue2);
+  Serial.print(sensorValue1);
+  Serial.print(" (Humidity 1: ");
+  Serial.print(humidity1Percentage);
+  Serial.println("%)");
   
+  Serial.print("Sensor Value 2: ");
+  Serial.print(sensorValue2);
+  Serial.print(" (Humidity 2: ");
+  Serial.print(humidity2Percentage);
+  Serial.println("%)");
+
   // ควบคุมรีเลย์ตามค่าจากเซ็นเซอร์ตัวที่ 1
-  String relayState1 = "OFF"; // เริ่มต้นรีเลย์ 1 เป็น OFF
-  if (sensorValue1 < 3000) {
-    // เปิดรีเลย์ 1
-    digitalWrite(relayPin1, HIGH);
-    relayState1 = "ON"; // เปลี่ยนสถานะรีเลย์ 1 เป็น ON
+  if (humidity1Percentage > 50) {
+    // เปิดรีเลย์ 1 (จ่ายไฟ)
+    digitalWrite(relayPin1, LOW); // จ่ายไฟ
     Serial.println("Relay 1 ON");
   } else {
-    // ปิดรีเลย์ 1
-    digitalWrite(relayPin1, LOW);
-    relayState1 = "OFF"; // เปลี่ยนสถานะรีเลย์ 1 เป็น OFF
+    // ปิดรีเลย์ 1 (ตัดไฟ)
+    digitalWrite(relayPin1, HIGH); // ตัดไฟ
     Serial.println("Relay 1 OFF");
   }
 
   // ควบคุมรีเลย์ตามค่าจากเซ็นเซอร์ตัวที่ 2
-  String relayState2 = "OFF"; // เริ่มต้นรีเลย์ 2 เป็น OFF
-  if (sensorValue2 < 3000) {
-    // เปิดรีเลย์ 2
-    digitalWrite(relayPin2, HIGH);
-    relayState2 = "ON"; // เปลี่ยนสถานะรีเลย์ 2 เป็น ON
+  if (humidity2Percentage > 50) {
+    // เปิดรีเลย์ 2 (จ่ายไฟ)
+    digitalWrite(relayPin2, LOW); // จ่ายไฟ
     Serial.println("Relay 2 ON");
   } else {
-    // ปิดรีเลย์ 2
-    digitalWrite(relayPin2, LOW);
-    relayState2 = "OFF"; // เปลี่ยนสถานะรีเลย์ 2 เป็น OFF
+    // ปิดรีเลย์ 2 (ตัดไฟ)
+    digitalWrite(relayPin2, HIGH); // ตัดไฟ
     Serial.println("Relay 2 OFF");
   }
 
@@ -87,8 +95,8 @@ void loop() {
     http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
     // สร้าง payload สำหรับส่ง
-    String payload = "humidity1=" + String(sensorValue1) + "&relay1=" + relayState1 +
-                     "&humidity2=" + String(sensorValue2) + "&relay2=" + relayState2;
+    String payload = "humidity1=" + String(humidity1Percentage) + "&relay1=" + (digitalRead(relayPin1) == LOW ? "ON" : "OFF") +
+                     "&humidity2=" + String(humidity2Percentage) + "&relay2=" + (digitalRead(relayPin2) == LOW ? "ON" : "OFF");
     
     // ส่ง POST request
     int httpResponseCode = http.POST(payload);
@@ -107,6 +115,6 @@ void loop() {
     http.end();
   }
 
-  // รอเวลา 5 วินาทีก่อนอ่านค่าครั้งถัดไป
+  // รอเวลา 1 วินาทีก่อนอ่านค่าครั้งถัดไป
   delay(1000);
 }
